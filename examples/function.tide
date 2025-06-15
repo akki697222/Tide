@@ -1,0 +1,7 @@
+fun test(int a, int b) {
+    ret a * b + 20;
+}
+
+if test(10, 10) == 120 {
+    print("Success!");
+}
