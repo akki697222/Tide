@@ -3,6 +3,10 @@ package tide.core;
 import java.util.HashSet;
 import java.util.Map;
 
+/**
+ * @author akki697222
+ * @since V1
+ */
 public abstract class JavaFunction extends TideObject {
     public static final TideTypeObject TYPE = new TideTypeObject("fun", null, new HashSet<>());
 

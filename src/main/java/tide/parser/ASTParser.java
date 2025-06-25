@@ -7,6 +7,7 @@ import tide.ast.statements.*;
 import tide.ast.*;
 import tide.compiler.TideParser;
 import tide.compiler.TideParserBaseVisitor;
+import tide.core.Modifier;
 
 import java.util.*;
 
@@ -15,12 +16,10 @@ public class ASTParser extends TideParserBaseVisitor<Node> {
         return new NodeInfo(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine());
     }
 
-    @Override
-    public Node visitRoot(TideParser.RootContext ctx) {
-        Program program = new Program(NodeInfo.ZERO);
+    public Node parse(TideParser.RootContext ctx, String sourceName) {
+        Program program = new Program(NodeInfo.ZERO, sourceName, Program.SourceType.PROGRAM);
 
         for (TideParser.StatementsContext statementsContext : ctx.statements()) {
-            System.out.println(statementsContext.getChild(0));
             program.body.add(visit(statementsContext.getChild(0)));
         }
 
@@ -36,14 +35,33 @@ public class ASTParser extends TideParserBaseVisitor<Node> {
         return program;
     }
 
+    public Program visitFunctionBlock(TideParser.BlockContext ctx, String functionName) {
+        Program program = new Program(getNodeInfo(ctx), functionName, Program.SourceType.FUNCTION);
+        for (ParseTree statement : ctx.statements()) {
+            program.body.add(visit(statement.getChild(0)));
+        }
+        return program;
+    }
+
     @Override
     public Node visitFunDecl(TideParser.FunDeclContext ctx) {
         return new FunDecl(
                 getNodeInfo(ctx),
-                (Program) visitBlock(ctx.block()),
+                visitFunctionBlock(ctx.block(), ctx.identifier().value),
                 ctx.identifier().value,
                 ctx.funModifier().isEmpty() ? new HashSet<>(List.of(Modifier.GLOBAL)) : ctx.funModifier().getFirst().modifiers,
                 parseFunArg(ctx.funArg())
+        );
+    }
+
+    @Override
+    public Node visitVarDecl(TideParser.VarDeclContext ctx) {
+        return new VarDecl(
+                getNodeInfo(ctx),
+                ctx.identifier().value,
+                ctx.varModifier().isEmpty() ? new HashSet<>(List.of(Modifier.GLOBAL)) : ctx.varModifier().getFirst().modifiers,
+                ctx.typeLiteral() != null ? ctx.typeLiteral().getText() : "object",
+                ctx.expr() != null ? (Expression) visitExpr(ctx.expr()) : new NullLiteral(getNodeInfo(ctx))
         );
     }
 
@@ -101,7 +119,21 @@ public class ASTParser extends TideParserBaseVisitor<Node> {
 
     @Override
     public Node visitExpr(TideParser.ExprContext ctx) {
-        return visit(ctx.logicalOr());
+        return visit(ctx.assignment());
+    }
+
+    //assignment
+    @Override
+    public Node visitAssignmentBase(TideParser.AssignmentBaseContext ctx) {
+        return visit(ctx.left);
+    }
+
+    @Override
+    public Node visitAssignmentExpr(TideParser.AssignmentExprContext ctx) {
+        ReferenceExpr left = (ReferenceExpr) visit(ctx.ref());
+        Expression right = (Expression) visit(ctx.assignment());
+        BinaryOperator op = BinaryOperator.fromSymbol(ctx.op.getText());
+        return new BinaryOperationExpr(getNodeInfo(ctx), op, left, right);
     }
 
     //logicalOr
@@ -354,5 +386,10 @@ public class ASTParser extends TideParserBaseVisitor<Node> {
     @Override
     public Node visitNullLiteral(TideParser.NullLiteralContext ctx) {
         return new NullLiteral(getNodeInfo(ctx));
+    }
+
+    @Override
+    public Node visitArrayLiteral(TideParser.ArrayLiteralContext ctx) {
+        return new ArrayLiteral(getNodeInfo(ctx), ctx.expr().stream().map(exprCtx -> (Expression) visitExpr(exprCtx)).toList());
     }
 }

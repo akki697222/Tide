@@ -1,7 +1,7 @@
 package tide.ast;
 
 import tide.ast.expression.Expression;
-import tide.parser.Modifier;
+import tide.core.Modifier;
 import tide.parser.NodeInfo;
 
 import java.util.List;

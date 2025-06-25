@@ -1,0 +1,19 @@
+fun fib(int n) {
+    if n <= 1 {
+        ret n;
+    } else {
+        ret fib(n - 1) + fib(n - 2);
+    }
+}
+
+fun test() {
+    # AttributeError
+    finalHelloWorld = "Hehe";
+}
+
+print(fib(10));
+print("Program Arguments: " + os.arguments() + " (length " + os.arguments().len + ")");
+
+final string finalHelloWorld = "Hello, World!";
+print(finalHelloWorld);
+test();

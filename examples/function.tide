@@ -5,3 +5,7 @@ fun test(int a, int b) {
 if test(10, 10) == 120 {
     print("Success!");
 }
+
+print(math.abs(-10));
+int[] intArray = [1, 2, 3];
+print(intArray);

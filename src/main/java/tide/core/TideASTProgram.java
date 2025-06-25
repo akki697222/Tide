@@ -4,6 +4,10 @@ import tide.ast.Program;
 
 import java.util.Map;
 
+/**
+ * @author akki697222
+ * @since V1
+ */
 public class TideASTProgram extends TideProgram {
     public final Program program;
 
@@ -29,5 +33,30 @@ public class TideASTProgram extends TideProgram {
     @Override
     public TideObject invoke(TideObject self) {
         return TideObject.runtime.invoke(this);
+    }
+
+    @Override
+    public int line() {
+        return program.nodeInfo.line();
+    }
+
+    @Override
+    public int column() {
+        return program.nodeInfo.column();
+    }
+
+    @Override
+    public String getSource() {
+        return program.source;
+    }
+
+    @Override
+    public String getSourceType() {
+        return program.sourceType.id;
+    }
+
+    @Override
+    public String toString() {
+        return program.toString();
     }
 }

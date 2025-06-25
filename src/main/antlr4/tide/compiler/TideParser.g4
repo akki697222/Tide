@@ -2,7 +2,7 @@ parser grammar TideParser;
 
 @header {
 import java.util.*;
-import tide.parser.Modifier;
+import tide.core.Modifier;
 }
 
 options {
@@ -16,6 +16,7 @@ root
 statements
     : funDecl
     | ifStmt
+    | varDecl
     | returnStmt
     | expr SEMI
     ;
@@ -37,7 +38,23 @@ else
     ;
 
 expr
-    : logicalOr
+    : assignment
+    ;
+
+assignment
+    : left=logicalOr #AssignmentBase
+    | ref op=(ASSIGN
+             | ADD_ASSIGN
+             | SUB_ASSIGN
+             | MUL_ASSIGN
+             | DIV_ASSIGN
+             | MOD_ASSIGN
+             | BAND_ASSIGN
+             | BXOR_ASSIGN
+             | BOR_ASSIGN
+             | LSH_ASSIGN
+             | RSH_ASSIGN)
+    assignment #AssignmentExpr
     ;
 
 logicalOr
@@ -107,9 +124,9 @@ postfix
 
 primary
     : funCall                                           #FunCallExpr
+    | left=primary DOT right=primary                   #ChainExpr
     | ref                                              #RefExpr
     | literal                                          #LiteralExpr
-    | left=primary DOT right=primary                   #ChainExpr
     | LPAREN expr RPAREN                               #ParenExpr
     ;
 
@@ -134,11 +151,24 @@ funArg
     : typeLiteral? identifier
     ;
 
+varDecl
+    : varModifier* typeLiteral identifier (ASSIGN expr)? SEMI
+    ;
+
+varModifier returns [Set<Modifier> modifiers]
+    @init { $modifiers = new HashSet<>(List.of(Modifier.GLOBAL)); }
+    : LOCAL {
+        if ($modifiers.contains(Modifier.GLOBAL)) $modifiers.remove(Modifier.GLOBAL);
+        if (!$modifiers.add(Modifier.LOCAL)) throw new RuntimeException("Duplicate modifier: local");
+    }
+    | FINAL  { if (!$modifiers.add(Modifier.FINAL)) throw new RuntimeException("Duplicate modifier: final"); }
+    ;
+
 funModifier returns [Set<Modifier> modifiers]
     @init { $modifiers = new HashSet<>(List.of(Modifier.GLOBAL)); }
     : LOCAL {
         if ($modifiers.contains(Modifier.GLOBAL)) $modifiers.remove(Modifier.GLOBAL);
-        if (!$modifiers.add(Modifier.LOCAL)) throw new RuntimeException("Duplicate modifier: meta");
+        if (!$modifiers.add(Modifier.LOCAL)) throw new RuntimeException("Duplicate modifier: local");
     }
     | META  { if (!$modifiers.add(Modifier.META)) throw new RuntimeException("Duplicate modifier: meta"); }
     ;
@@ -149,6 +179,7 @@ literal
     | string #StringLiteral
     | boolean #BooleanLiteral
     | NULL #NullLiteral
+    | LBRACK (expr (COMMA expr)*)? RBRACK #ArrayLiteral
     ;
 
 typeLiteral
@@ -163,7 +194,7 @@ identifier returns [String value]
 
 boolean returns [Boolean value]
     : BOOLEAN
-    { $value = Boolean.getBoolean($BOOLEAN.text); }
+    { $value = Boolean.parseBoolean($BOOLEAN.text); }
     ;
 
 string returns [String value]

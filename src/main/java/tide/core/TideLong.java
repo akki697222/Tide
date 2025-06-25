@@ -5,88 +5,87 @@ import tide.runtime.error.TypeError;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author akki697222
  * @since V1
  */
-public class TideInteger extends TideObject {
-    public static final TideTypeObject TYPE = new TideTypeObject("int", TideObject.TYPE, new HashSet<>());
-    private final Integer value;
-    private static final Map<Integer, TideInteger> cache = new HashMap<>();
+public class TideLong extends TideObject {
+    public static final TideTypeObject TYPE = new TideTypeObject("long", TideObject.TYPE, new HashSet<>());
+    private final Long value;
+    private static final Map<Long, TideLong> cache = new HashMap<>();
 
-    public TideInteger(Integer value) {
+    public TideLong(Long value) {
         this.value = value;
     }
 
-    public static TideInteger newInstance(Integer integer) {
-        if (cache.containsKey(integer)) {
-            return cache.get(integer);
+    public static TideLong newInstance(long value) {
+        if (cache.containsKey(value)) {
+            return cache.get(value);
         } else {
-            TideInteger tideInteger = new TideInteger(integer);
-            cache.put(integer, tideInteger);
-            return tideInteger;
+            TideLong tideLong = new TideLong(value);
+            cache.put(value, tideLong);
+            return tideLong;
         }
     }
 
     @Override
     public TideObject add(TideObject other) {
-        Integer right = parseInt(other);
+        Long right = parseLong(other);
         return newInstance(value + right);
     }
 
     @Override
     public TideObject sub(TideObject other) {
-        Integer right = parseInt(other);
+        Long right = parseLong(other);
         return newInstance(value - right);
     }
 
     @Override
     public TideObject mul(TideObject other) {
-        Integer right = parseInt(other);
+        Long right = parseLong(other);
         return newInstance(value * right);
     }
 
     @Override
     public TideObject div(TideObject other) {
-        Integer right = parseInt(other);
+        Long right = parseLong(other);
         return newInstance(value / right);
     }
 
     @Override
     public TideObject mod(TideObject other) {
-        Integer right = parseInt(other);
+        Long right = parseLong(other);
         return newInstance(value % right);
     }
 
     @Override
     public TideObject bor(TideObject other) {
-        Integer right = parseInt(other);
+        Long right = parseLong(other);
         return newInstance(value | right);
     }
 
     @Override
     public TideObject bxor(TideObject other) {
-        Integer right = parseInt(other);
+        Long right = parseLong(other);
         return newInstance(value ^ right);
     }
 
     @Override
     public TideObject band(TideObject other) {
-        Integer right = parseInt(other);
+        Long right = parseLong(other);
         return newInstance(value & right);
     }
 
     @Override
     public TideObject lsh(TideObject other) {
-        Integer right = parseInt(other);
+        Long right = parseLong(other);
         return newInstance(value << right);
     }
 
     @Override
     public TideObject rsh(TideObject other) {
-        Integer right = parseInt(other);
+        Long right = parseLong(other);
         return newInstance(value >> right);
     }
 
@@ -117,59 +116,59 @@ public class TideInteger extends TideObject {
 
     @Override
     public TideBool eq(TideObject other) {
-        Integer right = parseInt(other);
+        Long right = parseLong(other);
         return TideBool.of(value.equals(right));
     }
 
     @Override
     public TideBool ne(TideObject other) {
-        Integer right = parseInt(other);
+        Long right = parseLong(other);
         return TideBool.of(!value.equals(right));
     }
 
     @Override
     public TideBool lt(TideObject other) {
-        Integer right = parseInt(other);
+        Long right = parseLong(other);
         return TideBool.of(value < right);
     }
 
     @Override
     public TideBool le(TideObject other) {
-        Integer right = parseInt(other);
+        Long right = parseLong(other);
         return TideBool.of(value <= right);
     }
 
     @Override
     public TideBool gt(TideObject other) {
-        Integer right = parseInt(other);
+        Long right = parseLong(other);
         return TideBool.of(value > right);
     }
 
     @Override
     public TideBool ge(TideObject other) {
-        Integer right = parseInt(other);
+        Long right = parseLong(other);
         return TideBool.of(value >= right);
     }
 
-    private Integer parseInt(TideObject object) {
+    private Long parseLong(TideObject object) {
         switch (object) {
-            case TideInteger tideInteger -> {
-                return tideInteger.value;
-            }
             case TideLong tideLong -> {
-                return tideLong.getValue().intValue();
+                return tideLong.value;
+            }
+            case TideInteger tideInteger -> {
+                return tideInteger.getValue().longValue();
             }
             case TideFloat tideFloat -> {
-                return tideFloat.getValue().intValue();
+                return tideFloat.getValue().longValue();
             }
             case TideDouble tideDouble -> {
-                return tideDouble.getValue().intValue();
+                return tideDouble.getValue().longValue();
             }
             case TideString tideString -> {
                 try {
-                    return Integer.parseInt(tideString.toString());
+                    return Long.parseLong(tideString.toString());
                 } catch (NumberFormatException e) {
-                    throw new TypeError("Cannot convert string \"" + tideString + "\" to integer format");
+                    throw new TypeError("Cannot convert string \"" + tideString + "\" to long format");
                 }
             }
             case null, default -> throw new TypeError("Cannot convert " + object.getType() + " to int");
@@ -185,7 +184,7 @@ public class TideInteger extends TideObject {
         return TYPE;
     }
 
-    public Integer getValue() {
+    public Long getValue() {
         return value;
     }
 }

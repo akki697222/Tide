@@ -4,8 +4,8 @@ package tide.runtime.error;
  * @author akki697222
  * @since V1
  */
-public class TypeError extends RuntimeError {
-    public TypeError(String message) {
+public class AttributeError extends RuntimeError {
+    public AttributeError(String message) {
         super(message);
     }
 }

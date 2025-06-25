@@ -1,7 +1,7 @@
 package tide.ast.statements;
 
 import tide.ast.Program;
-import tide.parser.Modifier;
+import tide.core.Modifier;
 import tide.parser.NodeInfo;
 
 import java.util.Map;

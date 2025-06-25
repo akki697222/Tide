@@ -6,6 +6,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+/**
+ * @author akki697222
+ * @since V1
+ */
 public class TideBool extends TideObject {
     public static final TideTypeObject TYPE = new TideTypeObject("bool", TideObject.TYPE, new HashSet<>());
     private final Boolean value;
@@ -40,7 +44,7 @@ public class TideBool extends TideObject {
     }
 
     @Override
-    public TideObject invert(TideObject other) {
+    public TideObject invert() {
         return value ? FALSE : TRUE;
     }
 

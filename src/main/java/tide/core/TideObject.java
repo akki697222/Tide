@@ -1,15 +1,28 @@
 package tide.core;
 
-import tide.parser.Modifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tide.runtime.Runtime;
 import tide.runtime.error.UnsupportedBinaryOperationError;
 
 import java.io.Serializable;
 import java.util.*;
 
+/**
+ * @author akki697222
+ * @since V1
+ */
 public class TideObject implements Serializable {
-    public static final TideObject NULL = new TideObject();
+    public static final TideObject NULL = new TideObject() {
+        final TideTypeObject TYPE_NULL = new TideTypeObject("null", null, new HashSet<>());
+
+        @Override
+        public TideTypeObject getType() {
+            return TYPE_NULL;
+        }
+    };
     public static final TideTypeObject TYPE = new TideTypeObject("object", null, new HashSet<>());
+    private static final Logger log = LoggerFactory.getLogger(TideObject.class);
     public static Runtime runtime;
 
     protected final Map<String, TideObject> fields = new HashMap<>();
@@ -110,15 +123,15 @@ public class TideObject implements Serializable {
         throw new UnsupportedBinaryOperationError("");
     }
 
-    public TideObject invert(TideObject other) {
+    public TideObject invert() {
         throw new UnsupportedBinaryOperationError("");
     }
 
-    public TideObject abs(TideObject other) {
+    public TideObject abs() {
         throw new UnsupportedBinaryOperationError("");
     }
 
-    public TideObject neg(TideObject other) {
+    public TideObject neg() {
         throw new UnsupportedBinaryOperationError("");
     }
 

@@ -16,6 +16,7 @@ LOCAL    : 'local';
 META     : 'meta';
 RET      : 'ret';
 NULL     : 'null';
+FINAL    : 'final';
 
 LPAREN : '(';
 RPAREN : ')';

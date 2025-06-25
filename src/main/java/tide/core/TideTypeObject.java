@@ -4,6 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * @author akki697222
+ * @since V1
+ */
 public class TideTypeObject extends TideObject {
     private final String typeName;
     private final TideTypeObject superType;
