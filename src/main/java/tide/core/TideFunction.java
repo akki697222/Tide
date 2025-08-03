@@ -9,7 +9,7 @@ import java.util.Map;
  * @since V1
  */
 public class TideFunction extends TideObject {
-    public static final TideTypeObject TYPE = new TideTypeObject("fun", null, new HashSet<>());
+    public static final TideTypeObject TYPE = new TideTypeObject("function", new HashSet<>());
 
     protected final Map<String, String> signature;
     protected final TideProgram program;
@@ -53,6 +53,6 @@ public class TideFunction extends TideObject {
 
     @Override
     public TideTypeObject getType() {
-        return super.getType();
+        return TYPE;
     }
 }

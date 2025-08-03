@@ -18,11 +18,58 @@ statements
     | ifStmt
     | varDecl
     | returnStmt
+    | whileStmt
+    | breakStmt
+    | forStmt
+    | classDecl
+    | interfaceDecl
     | expr SEMI
     ;
 
 returnStmt
-    : RET expr SEMI
+    : RET expr? SEMI
+    ;
+
+forStmt
+    : FOR (forNumerical | forIterate)
+    ;
+
+forNumerical
+    : identifier IN expr (FOR_INC | FOR_EXC) expr block
+    ;
+
+forIterate
+    : identifier IN expr block
+    ;
+
+interfaceDecl
+    : modifier* INTERFACE identifier classInherit? LBRACE interfaceMethodDecl* RBRACE
+    ;
+
+interfaceMethodDecl
+    : FUNCTION identifier LPAREN (funArg (COMMA funArg)*)? RPAREN SEMI
+    ;
+
+classDecl
+    : modifier* CLASS identifier classInherit? classBlock
+    ;
+
+classInherit
+    : COLON identifier (COMMA identifier)*
+    ;
+
+classBlock
+    : LBRACE classStatements* RBRACE
+    ;
+
+classStatements
+    : funDecl
+    | varDecl
+    | classConstructor
+    ;
+
+classConstructor
+    : (PUBLIC | PRIVATE) CONSTRUCTOR LPAREN (funArg (COMMA funArg)*)? RPAREN block
     ;
 
 ifStmt
@@ -37,6 +84,19 @@ else
     : ELSE block
     ;
 
+/*
+while true {
+    #do something
+}
+*/
+whileStmt
+    : WHILE expr block
+    ;
+
+breakStmt
+    : BREAK SEMI
+    ;
+
 expr
     : assignment
     ;
@@ -49,6 +109,7 @@ assignment
              | MUL_ASSIGN
              | DIV_ASSIGN
              | MOD_ASSIGN
+             | POW_ASSIGN
              | BAND_ASSIGN
              | BXOR_ASSIGN
              | BOR_ASSIGN
@@ -104,7 +165,7 @@ additive
 
 multiplicative
     : left=unary                                         #MultiplicativeBase
-    | left=multiplicative op=(MUL | DIV | MOD) right=unary #MultiplicativeExpr
+    | left=multiplicative op=(MUL | DIV | MOD | POW) right=unary #MultiplicativeExpr
     ;
 
 unary
@@ -123,11 +184,22 @@ postfix
     ;
 
 primary
-    : funCall                                           #FunCallExpr
-    | left=primary DOT right=primary                   #ChainExpr
-    | ref                                              #RefExpr
-    | literal                                          #LiteralExpr
-    | LPAREN expr RPAREN                               #ParenExpr
+    : funCall                         #FunCallExpr
+    | left=primary DOT right=primary #ChainExpr
+    | left=(THIS | SUPER) DOT right=primary #ClassAccessorExpr
+    | SUPER LPAREN (expr (COMMA expr)*)? RPAREN #SuperClassConstructorCallerExpr
+    | ref                            #RefExpr
+    | lambda #LambdaExpr
+    | literal                        #LiteralExpr
+    | LPAREN expr RPAREN             #ParenExpr
+    ;
+
+lambda
+    : lambdaParam ARROW (block | expr)
+    ;
+
+lambdaParam
+    : LPAREN (funArg (COMMA funArg)*)? RPAREN
     ;
 
 funCall
@@ -144,7 +216,7 @@ block
     ;
 
 funDecl
-    : funModifier* FUNCTION identifier LPAREN (funArg (COMMA funArg)*)? RPAREN block
+    : modifier* FUNCTION identifier LPAREN (funArg (COMMA funArg)*)? RPAREN (block | SEMI)
     ;
 
 funArg
@@ -152,25 +224,15 @@ funArg
     ;
 
 varDecl
-    : varModifier* typeLiteral identifier (ASSIGN expr)? SEMI
+    : modifier* typeLiteral identifier (ASSIGN expr)? SEMI
     ;
 
-varModifier returns [Set<Modifier> modifiers]
-    @init { $modifiers = new HashSet<>(List.of(Modifier.GLOBAL)); }
-    : LOCAL {
-        if ($modifiers.contains(Modifier.GLOBAL)) $modifiers.remove(Modifier.GLOBAL);
-        if (!$modifiers.add(Modifier.LOCAL)) throw new RuntimeException("Duplicate modifier: local");
-    }
-    | FINAL  { if (!$modifiers.add(Modifier.FINAL)) throw new RuntimeException("Duplicate modifier: final"); }
-    ;
-
-funModifier returns [Set<Modifier> modifiers]
-    @init { $modifiers = new HashSet<>(List.of(Modifier.GLOBAL)); }
-    : LOCAL {
-        if ($modifiers.contains(Modifier.GLOBAL)) $modifiers.remove(Modifier.GLOBAL);
-        if (!$modifiers.add(Modifier.LOCAL)) throw new RuntimeException("Duplicate modifier: local");
-    }
-    | META  { if (!$modifiers.add(Modifier.META)) throw new RuntimeException("Duplicate modifier: meta"); }
+modifier
+    : PRIVATE
+    | PUBLIC
+    | ABSTRACT
+    | FINAL
+    | STATIC //static(class method,variable only)
     ;
 
 literal

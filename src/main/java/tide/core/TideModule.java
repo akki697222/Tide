@@ -7,5 +7,5 @@ import java.util.HashSet;
  * @since V1
  */
 public class TideModule extends TideObject {
-    public static final TideTypeObject TYPE = new TideTypeObject("$class", TideObject.TYPE, new HashSet<>());
+    public static final TideTypeObject TYPE = new TideTypeObject("$module", new HashSet<>());
 }

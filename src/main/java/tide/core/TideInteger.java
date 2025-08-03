@@ -1,33 +1,36 @@
 package tide.core;
 
+import tide.runtime.error.CastError;
 import tide.runtime.error.TypeError;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author akki697222
  * @since V1
  */
 public class TideInteger extends TideObject {
-    public static final TideTypeObject TYPE = new TideTypeObject("int", TideObject.TYPE, new HashSet<>());
+    public static final TideTypeObject TYPE = new TideTypeObject("int", new HashSet<>());
     private final Integer value;
-    private static final Map<Integer, TideInteger> cache = new HashMap<>();
+    private static final int CACHE_LOW = -1024;
+    private static final int CACHE_HIGH = 1024;
+    private static final TideInteger[] cache = new TideInteger[CACHE_HIGH - CACHE_LOW + 1];
 
     public TideInteger(Integer value) {
         this.value = value;
     }
 
-    public static TideInteger newInstance(Integer integer) {
-        if (cache.containsKey(integer)) {
-            return cache.get(integer);
-        } else {
-            TideInteger tideInteger = new TideInteger(integer);
-            cache.put(integer, tideInteger);
-            return tideInteger;
+    static {
+        for (int i = CACHE_LOW; i <= CACHE_HIGH; i++) {
+            cache[i - CACHE_LOW] = new TideInteger(i);
         }
+    }
+
+    public static TideInteger newInstance(Integer integer) {
+        if (integer >= CACHE_LOW && integer <= CACHE_HIGH) {
+            return cache[integer - CACHE_LOW];
+        }
+        return new TideInteger(integer);
     }
 
     @Override
@@ -102,7 +105,7 @@ public class TideInteger extends TideObject {
 
     @Override
     public TideObject neg() {
-        return newInstance(-Math.abs(value));
+        return newInstance(-value);
     }
 
     @Override
@@ -113,6 +116,11 @@ public class TideInteger extends TideObject {
     @Override
     public TideObject decl() {
         return newInstance(value - 1);
+    }
+
+    @Override
+    public TideObject pow(TideObject other) {
+        return newInstance((int) Math.pow(value, parseInt(other)));
     }
 
     @Override
@@ -151,7 +159,7 @@ public class TideInteger extends TideObject {
         return TideBool.of(value >= right);
     }
 
-    private Integer parseInt(TideObject object) {
+    public static Integer parseInt(TideObject object) {
         switch (object) {
             case TideInteger tideInteger -> {
                 return tideInteger.value;
@@ -187,5 +195,25 @@ public class TideInteger extends TideObject {
 
     public Integer getValue() {
         return value;
+    }
+
+    @Override
+    public TideObject copy() {
+        return newInstance(value);
+    }
+
+    @Override
+    public TideObject cast(TideTypeObject type) {
+        if (type == TideInteger.TYPE) {
+            return TideInteger.newInstance(TideInteger.parseInt(this));
+        } else if (type == TideLong.TYPE) {
+            return TideLong.newInstance(TideLong.parseLong(this));
+        } else if (type == TideFloat.TYPE) {
+            return TideFloat.newInstance(TideFloat.parseFloat(this));
+        } else if (type == TideDouble.TYPE) {
+            return TideDouble.newInstance(TideDouble.parseDouble(this));
+        } else {
+            throw new CastError("Cannot cast " + TYPE.getTypeName() + " to " + type.getTypeName());
+        }
     }
 }

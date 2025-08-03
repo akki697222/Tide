@@ -27,7 +27,7 @@ public class TideScope {
     public void replace(String name, TideObject o) {
         if (env.containsKey(name)) {
             TideObjectHolder holder = env.get(name);
-            if (holder.modifiers.contains(Modifier.FINAL)) {
+            if (holder.modifiers().contains(Modifier.FINAL)) {
                 throw new AttributeError("Attempt to change read-only variable");
             } else {
                 env.replace(name, new TideObjectHolder(o, new HashSet<>()));
@@ -41,7 +41,7 @@ public class TideScope {
 
     public TideObject get(String name) {
         if (env.containsKey(name)) {
-            return env.get(name).object;
+            return env.get(name).object();
         } else if (parent != null) {
             return parent.get(name);
         } else {
@@ -58,7 +58,7 @@ public class TideScope {
     public void replace(String name, TideObjectHolder o) {
         if (env.containsKey(name)) {
             TideObjectHolder holder = env.get(name);
-            if (holder.modifiers.contains(Modifier.FINAL)) {
+            if (holder.modifiers().contains(Modifier.FINAL)) {
                 throw new AttributeError("Attempt to change read-only variable");
             } else {
                 env.replace(name, o);
@@ -85,7 +85,7 @@ public class TideScope {
     private boolean setParents(String name, TideObject o) {
         if (env.containsKey(name)) {
             TideObjectHolder holder = env.get(name);
-            if (holder.modifiers.contains(Modifier.FINAL)) {
+            if (holder.modifiers().contains(Modifier.FINAL)) {
                 throw new AttributeError("Attempt to change read-only variable");
             } else {
                 env.replace(name, new TideObjectHolder(o, new HashSet<>()));
@@ -101,7 +101,7 @@ public class TideScope {
     private boolean setParents(String name, TideObjectHolder o) {
         if (env.containsKey(name)) {
             TideObjectHolder holder = env.get(name);
-            if (holder.modifiers.contains(Modifier.FINAL)) {
+            if (holder.modifiers().contains(Modifier.FINAL)) {
                 throw new AttributeError("Attempt to change read-only variable");
             } else {
                 env.replace(name, o);
@@ -140,6 +140,4 @@ public class TideScope {
     public String toString() {
         return env.toString();
     }
-
-    public record TideObjectHolder(TideObject object, Set<Modifier> modifiers) {}
 }

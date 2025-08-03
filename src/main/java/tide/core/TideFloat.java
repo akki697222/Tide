@@ -1,5 +1,6 @@
 package tide.core;
 
+import tide.runtime.error.CastError;
 import tide.runtime.error.TypeError;
 
 import java.util.HashMap;
@@ -11,7 +12,7 @@ import java.util.Map;
  * @since V1
  */
 public class TideFloat extends TideObject {
-    public static final TideTypeObject TYPE = new TideTypeObject("double", TideObject.TYPE, new HashSet<>());
+    public static final TideTypeObject TYPE = new TideTypeObject("float", new HashSet<>());
     private final Float value;
     private static final Map<Float, TideFloat> cache = new HashMap<Float, TideFloat>();
 
@@ -23,39 +24,39 @@ public class TideFloat extends TideObject {
         if (cache.containsKey(value)) {
             return cache.get(value);
         } else {
-            TideFloat tideDouble = new TideFloat(value);
-            cache.put(value, tideDouble);
-            return tideDouble;
+            TideFloat tideFloat = new TideFloat(value);
+            cache.put(value, tideFloat);
+            return tideFloat;
         }
     }
 
     @Override
     public TideObject add(TideObject other) {
-        Float right = parseDouble(other);
+        Float right = parseFloat(other);
         return newInstance(value + right);
     }
 
     @Override
     public TideObject sub(TideObject other) {
-        Float right = parseDouble(other);
+        Float right = parseFloat(other);
         return newInstance(value - right);
     }
 
     @Override
     public TideObject mul(TideObject other) {
-        Float right = parseDouble(other);
+        Float right = parseFloat(other);
         return newInstance(value * right);
     }
 
     @Override
     public TideObject div(TideObject other) {
-        Float right = parseDouble(other);
+        Float right = parseFloat(other);
         return newInstance(value / right);
     }
 
     @Override
     public TideObject mod(TideObject other) {
-        Float right = parseDouble(other);
+        Float right = parseFloat(other);
         return newInstance(value % right);
     }
 
@@ -81,41 +82,46 @@ public class TideFloat extends TideObject {
 
     @Override
     public TideBool eq(TideObject other) {
-        Float right = parseDouble(other);
+        Float right = parseFloat(other);
         return TideBool.of(value.equals(right));
     }
 
     @Override
     public TideBool ne(TideObject other) {
-        Float right = parseDouble(other);
+        Float right = parseFloat(other);
         return TideBool.of(!value.equals(right));
     }
 
     @Override
     public TideBool lt(TideObject other) {
-        Float right = parseDouble(other);
+        Float right = parseFloat(other);
         return TideBool.of(value < right);
     }
 
     @Override
     public TideBool le(TideObject other) {
-        Float right = parseDouble(other);
+        Float right = parseFloat(other);
         return TideBool.of(value <= right);
     }
 
     @Override
     public TideBool gt(TideObject other) {
-        Float right = parseDouble(other);
+        Float right = parseFloat(other);
         return TideBool.of(value > right);
     }
 
     @Override
     public TideBool ge(TideObject other) {
-        Float right = parseDouble(other);
+        Float right = parseFloat(other);
         return TideBool.of(value >= right);
     }
 
-    private Float parseDouble(TideObject object) {
+    @Override
+    public TideObject pow(TideObject other) {
+        return newInstance((float) Math.pow(value, parseFloat(other)));
+    }
+
+    public static Float parseFloat(TideObject object) {
         switch (object) {
             case TideFloat tideFloat -> {
                 return tideFloat.value;
@@ -151,5 +157,25 @@ public class TideFloat extends TideObject {
 
     public Float getValue() {
         return value;
+    }
+
+    @Override
+    public TideObject copy() {
+        return newInstance(value);
+    }
+
+    @Override
+    public TideObject cast(TideTypeObject type) {
+        if (type == TideInteger.TYPE) {
+            return TideInteger.newInstance(TideInteger.parseInt(this));
+        } else if (type == TideLong.TYPE) {
+            return TideLong.newInstance(TideLong.parseLong(this));
+        } else if (type == TideFloat.TYPE) {
+            return TideFloat.newInstance(TideFloat.parseFloat(this));
+        } else if (type == TideDouble.TYPE) {
+            return TideDouble.newInstance(TideDouble.parseDouble(this));
+        } else {
+            throw new CastError("Cannot cast " + TYPE.getTypeName() + " to " + type.getTypeName());
+        }
     }
 }

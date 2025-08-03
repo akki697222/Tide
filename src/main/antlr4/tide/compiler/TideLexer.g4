@@ -4,19 +4,30 @@ lexer grammar TideLexer;
 
 }
 
-FUNCTION : 'fun';
-VAR      : 'var';
-VAL      : 'val';
-VARARG   : 'vararg';
-IF       : 'if';
-ELSEIF   : 'elseif';
-ELSE     : 'else';
-FOR      : 'for';
-LOCAL    : 'local';
-META     : 'meta';
-RET      : 'ret';
-NULL     : 'null';
-FINAL    : 'final';
+FUNCTION    : 'fun';
+VAR         : 'var';
+VAL         : 'val';
+VARARG      : 'vararg';
+IF          : 'if';
+ELSEIF      : 'elseif';
+ELSE        : 'else';
+FOR         : 'for';
+PUBLIC      : 'public';
+PRIVATE     : 'private';
+META        : 'meta';
+RET         : 'ret';
+NULL        : 'null';
+FINAL       : 'final';
+WHILE       : 'while';
+BREAK       : 'break';
+IN          : 'in';
+CLASS       : 'class';
+ABSTRACT    : 'abstract';
+INTERFACE   : 'interface';
+CONSTRUCTOR : 'constructor';
+STATIC      : 'static';
+SUPER       : 'super';
+THIS        : 'this';
 
 LPAREN : '(';
 RPAREN : ')';
@@ -44,8 +55,9 @@ SUB_ASSIGN   : '-=';
 MUL_ASSIGN   : '*=';
 DIV_ASSIGN   : '/=';
 MOD_ASSIGN   : '%=';
+POW_ASSIGN   : '^=';
 BAND_ASSIGN  : '&=';
-BXOR_ASSIGN  : '^=';
+BXOR_ASSIGN  : '^^=';
 BOR_ASSIGN   : '|=';
 LSH_ASSIGN   : '<<=';
 RSH_ASSIGN   : '>>=';
@@ -58,14 +70,16 @@ SUB          : '-';
 MUL          : '*';
 DIV          : '/';
 MOD          : '%';
+POW          : '^';
 ARROW        : '->';
+ARROW_EQ     : '=>';
 COLON_DOUBLE : '::';
 FOR_INC      : '..=';
 FOR_EXC      : '..';
 LSH          : '<<';
 RSH          : '>>';
 BAND         : '&';
-BXOR         : '^';
+BXOR         : '^^';
 BOR          : '|';
 
 INT         : DIGITS ;
@@ -85,6 +99,6 @@ fragment HEX_LETTER      : [0-9a-fA-F] ;
 
 WS: [ \t\r\n\u000C]+ -> skip;
 
-COMMENT: '#[' .*? ']' -> skip;
+COMMENT: '/*' .*? '*/' -> skip;
 
-LINE_COMMENT: '#' ~[\r\n]* -> skip;
+LINE_COMMENT: '//' ~[\r\n]* -> skip;

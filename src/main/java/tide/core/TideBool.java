@@ -11,7 +11,7 @@ import java.util.Map;
  * @since V1
  */
 public class TideBool extends TideObject {
-    public static final TideTypeObject TYPE = new TideTypeObject("bool", TideObject.TYPE, new HashSet<>());
+    public static final TideTypeObject TYPE = new TideTypeObject("bool", new HashSet<>());
     private final Boolean value;
 
     private TideBool(Boolean value) {
@@ -69,5 +69,10 @@ public class TideBool extends TideObject {
 
     public Boolean getValue() {
         return value;
+    }
+
+    @Override
+    public TideObject copy() {
+        return this;
     }
 }

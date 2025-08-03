@@ -1,5 +1,6 @@
 package tide.core;
 
+import tide.runtime.error.CastError;
 import tide.runtime.error.TypeError;
 
 import java.util.HashMap;
@@ -11,7 +12,7 @@ import java.util.Map;
  * @since V1
  */
 public class TideDouble extends TideObject {
-    public static final TideTypeObject TYPE = new TideTypeObject("double", TideObject.TYPE, new HashSet<>());
+    public static final TideTypeObject TYPE = new TideTypeObject("double", new HashSet<>());
     private final Double value;
     private static final Map<Double, TideDouble> cache = new HashMap<>();
 
@@ -80,6 +81,11 @@ public class TideDouble extends TideObject {
     }
 
     @Override
+    public TideObject pow(TideObject other) {
+        return newInstance(Math.pow(value, parseDouble(other)));
+    }
+
+    @Override
     public TideBool eq(TideObject other) {
         Double right = parseDouble(other);
         return TideBool.of(value.equals(right));
@@ -115,7 +121,7 @@ public class TideDouble extends TideObject {
         return TideBool.of(value >= right);
     }
 
-    private Double parseDouble(TideObject object) {
+    public static Double parseDouble(TideObject object) {
         switch (object) {
             case TideDouble tideDouble -> {
                 return tideDouble.value;
@@ -151,5 +157,25 @@ public class TideDouble extends TideObject {
 
     public Double getValue() {
         return value;
+    }
+
+    @Override
+    public TideObject copy() {
+        return newInstance(value);
+    }
+
+    @Override
+    public TideObject cast(TideTypeObject type) {
+        if (type == TideInteger.TYPE) {
+            return TideInteger.newInstance(TideInteger.parseInt(this));
+        } else if (type == TideLong.TYPE) {
+            return TideLong.newInstance(TideLong.parseLong(this));
+        } else if (type == TideFloat.TYPE) {
+            return TideFloat.newInstance(TideFloat.parseFloat(this));
+        } else if (type == TideDouble.TYPE) {
+            return TideDouble.newInstance(TideDouble.parseDouble(this));
+        } else {
+            throw new CastError("Cannot cast " + TYPE.getTypeName() + " to " + type.getTypeName());
+        }
     }
 }

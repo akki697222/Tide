@@ -20,7 +20,9 @@ import tide.runtime.modules.MathModule;
 import tide.runtime.modules.OsModule;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class Test {
@@ -40,7 +42,20 @@ public class Test {
             interpreter.addModule(new GlobalModule());
             interpreter.addModule(new MathModule());
             interpreter.addModule(new OsModule());
-            interpreter.execute(new TideASTProgram(program), args);
+            System.out.println(program);
+            List<Long> result = new ArrayList<>();
+            for (int i = 0; i < 10; i++) {
+                long start = System.currentTimeMillis();
+                interpreter.execute(new TideASTProgram(program), args);
+                long end = System.currentTimeMillis();
+                System.out.println("[" + (i + 1) + "回目] 実行時間: " + (end - start) + "ms");
+                result.add(end - start);
+            }
+            long sum = 0;
+            for (long l : result) {
+                sum += l;
+            }
+            System.out.println("実行速度の平均値: " + (sum / result.size()) + "ms");
         } catch (Exception e) {
             interpreter.printStackTrace(e);
         }

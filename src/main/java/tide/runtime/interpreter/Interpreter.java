@@ -8,6 +8,7 @@ import tide.core.*;
 import tide.runtime.AbstractRuntime;
 import tide.runtime.RuntimeFrame;
 import tide.runtime.error.*;
+import tide.runtime.error.internal.Break;
 import tide.runtime.error.internal.Return;
 
 import java.util.HashMap;
@@ -27,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * <p><b>Responsibilities:</b></p>
  * <ul>
- *     <li>Interpret and evaluate {@link tide.ast.Node} instances</li>
+ *     <li>Interpret and evaluate {@link Node} instances</li>
  *     <li>Manage scope, stack frames, and runtime environment</li>
  *     <li>Provide custom stack trace output with {@link #printStackTrace(Throwable)}</li>
  *     <li>Invoke both user-defined and native Java functions</li>
@@ -124,9 +125,64 @@ public class Interpreter extends AbstractRuntime {
             case VarDecl varDecl -> {
                 TideObject init = evaluate(varDecl.initializer);
                 if (init.getType().getTypeName().equals(varDecl.type) || varDecl.type.equals("object")) {
-                    env().set(varDecl.name, new TideScope.TideObjectHolder(init, varDecl.modifiers));
+                    env().set(varDecl.name, new TideObjectHolder(init, varDecl.modifiers));
                 } else {
+                    if (init instanceof TideArray array) {
+                        if (array.length() == 0) {
+                            env().set(varDecl.name, new TideObjectHolder(new TideArray(varDecl.type.substring(0, varDecl.type.length() - 2), 0), varDecl.modifiers));
+                            return;
+                        }
+                    }
                     throw new TypeError("Expected " + varDecl.type + ", got " + init.getType().getTypeName());
+                }
+            }
+            case WhileStmt whileStmt -> {
+                while (true) {
+                    TideObject evaluated = evaluate(whileStmt.expression);
+                    if (evaluated instanceof TideBool bool) {
+                        if (bool.getValue()) {
+                            try {
+                                invoke(new TideASTProgram(whileStmt.block), new HashMap<>(), true, true);
+                            } catch (Break ignored) {
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
+                    } else {
+                        throw new TypeError("The while expression must return a boolean value.");
+                    }
+                }
+            }
+            case ClassDecl classDecl -> {
+                TideClass clazz = new TideClass(
+                        classDecl.name,
+                        new TideASTProgram(classDecl.body),
+                        classDecl.modifiers,
+                        classDecl.inherits
+                );
+                initializeClassStatic(clazz);
+                env().set(classDecl.name, clazz);
+            }
+            case ForIterate forIterate -> {
+
+            }
+            case ForNumerical forNumerical -> {
+                TideObject left = evaluate(forNumerical.left);
+                TideObject right = evaluate(forNumerical.right);
+                TideObject variable = left.copy();
+                while (true) {
+                    if (forNumerical.exclusive) {
+                        if (variable.lt(right).equals(TideBool.FALSE)) {
+                            break;
+                        }
+                    } else {
+                        if (variable.le(right).equals(TideBool.FALSE)) {
+                            break;
+                        }
+                    }
+                    invoke(new TideASTProgram(forNumerical.body), Map.of(forNumerical.varName, variable));
+                    variable = variable.incl();
                 }
             }
             case ReturnStmt returnStmt -> {
@@ -134,6 +190,7 @@ public class Interpreter extends AbstractRuntime {
                 logDebug("[RET(STMT)] " + result);
                 throw new Return(result);
             }
+            case BreakStmt ignored -> throw new Break();
             default -> throw new UnsupportedOperationException(statement.getClass().getSimpleName());
         }
     }
@@ -167,20 +224,23 @@ public class Interpreter extends AbstractRuntime {
                     case MUL -> left.mul(right);
                     case DIV -> left.div(right);
                     case MOD -> left.mod(right);
+                    case POW -> left.pow(right);
                     case ASSIGN,
-                    ADD_ASSIGN,
-                    SUB_ASSIGN,
-                    MUL_ASSIGN,
-                    DIV_ASSIGN,
-                    MOD_ASSIGN,
-                    LSH_ASSIGN,
-                    RSH_ASSIGN,
-                    BAND_ASSIGN,
-                    BOR_ASSIGN ,
-                    BXOR_ASSIGN -> {
+                         ADD_ASSIGN,
+                         SUB_ASSIGN,
+                         MUL_ASSIGN,
+                         DIV_ASSIGN,
+                         MOD_ASSIGN,
+                         POW_ASSIGN,
+                         LSH_ASSIGN,
+                         RSH_ASSIGN,
+                         BAND_ASSIGN,
+                         BOR_ASSIGN ,
+                         BXOR_ASSIGN -> {
+                        TideScope env = env();
                         String target;
                         if (binaryOperationExpr.left instanceof ArrayReferenceExpr arrayReferenceExpr) {
-                            TideObject mayBeArray = env().get(arrayReferenceExpr.identifier);
+                            TideObject mayBeArray = env.get(arrayReferenceExpr.identifier);
                             if (mayBeArray instanceof TideArray array) {
                                 array.set((TideInteger) evaluate(arrayReferenceExpr.arrayAccess), right);
                                 yield right;
@@ -193,21 +253,23 @@ public class Interpreter extends AbstractRuntime {
                             throw new RuntimeError("Attempt to assign a value to a non-variable");
                         }
                         TideObject assigned;
+                        TideObject targetObj = env.get(target);
                         switch (binaryOperationExpr.operator) {
                             case ASSIGN -> assigned = right;
-                            case ADD_ASSIGN -> assigned = env().get(target).add(right);
-                            case SUB_ASSIGN -> assigned = env().get(target).sub(right);
-                            case MUL_ASSIGN -> assigned = env().get(target).mul(right);
-                            case DIV_ASSIGN -> assigned = env().get(target).div(right);
-                            case MOD_ASSIGN -> assigned = env().get(target).mod(right);
-                            case LSH_ASSIGN -> assigned = env().get(target).lsh(right);
-                            case RSH_ASSIGN -> assigned = env().get(target).rsh(right);
-                            case BAND_ASSIGN -> assigned = env().get(target).band(right);
-                            case BOR_ASSIGN -> assigned = env().get(target).bor(right);
-                            case BXOR_ASSIGN -> assigned = env().get(target).bxor(right);
+                            case ADD_ASSIGN -> assigned = targetObj.add(right);
+                            case SUB_ASSIGN -> assigned = targetObj.sub(right);
+                            case MUL_ASSIGN -> assigned = targetObj.mul(right);
+                            case DIV_ASSIGN -> assigned = targetObj.div(right);
+                            case POW_ASSIGN -> assigned = targetObj.pow(right);
+                            case MOD_ASSIGN -> assigned = targetObj.mod(right);
+                            case LSH_ASSIGN -> assigned = targetObj.lsh(right);
+                            case RSH_ASSIGN -> assigned = targetObj.rsh(right);
+                            case BAND_ASSIGN -> assigned = targetObj.band(right);
+                            case BOR_ASSIGN -> assigned = targetObj.bor(right);
+                            case BXOR_ASSIGN -> assigned = targetObj.bxor(right);
                             default -> throw new IllegalStateException("An unexpected error has occurred");
                         }
-                        env().replace(target, assigned);
+                        env.replace(target, assigned);
                         yield assigned;
                     }
                 };
@@ -220,6 +282,17 @@ public class Interpreter extends AbstractRuntime {
                 if (operand == null) {
                     throw new ReferenceError("null");
                 }
+                if (operator.isPostfix()) {
+                    TideObject result = operand.copy();
+                    if (operator == UnaryOperator.POST_INC) {
+                        operand.incl();
+                    } else if (operator == UnaryOperator.POST_DEC) {
+                        operand.decl();
+                    } else {
+                        throw new UnsupportedOperationException("Unsupported POST operator in unary expression");
+                    }
+                    return result;
+                }
                 return switch (operator) {
                     case TILDE -> operand.binvert();
                     case BANG -> operand.invert();
@@ -227,7 +300,7 @@ public class Interpreter extends AbstractRuntime {
                     case MINUS -> operand.neg();
                     case PRE_INC -> operand.incl();
                     case PRE_DEC -> operand.decl();
-                    default -> throw new UnsupportedOperationException("Post incl/decl not supported in this case");
+                    default -> throw new UnsupportedOperationException("Unsupported unary operator: " + operator);
                 };
             }
             case ArrayReferenceExpr arrayReferenceExpr -> {
@@ -248,6 +321,12 @@ public class Interpreter extends AbstractRuntime {
                     throw new UnsupportedOperationException("");
                 }
             }
+            case LambdaExpr lambdaExpr -> {
+                return new TideFunction(
+                        lambdaExpr.parameters,
+                        new TideASTProgram(lambdaExpr.program)
+                );
+            }
             case ReferenceExpr referenceExpr -> {
                 return env().get(referenceExpr.identifier);
             }
@@ -260,20 +339,28 @@ public class Interpreter extends AbstractRuntime {
             case FloatingLiteral floatingLiteral -> {
                 return new TideDouble(floatingLiteral.value);
             }
+            case BooleanLiteral booleanLiteral -> {
+                return booleanLiteral.value ? TideBool.TRUE : TideBool.FALSE;
+            }
             case FunCall funCall -> {
                 logDebug("[FCALL]");
                 return invokeFunction(funCall, env().get(funCall.identifier));
             }
             case ArrayLiteral arrayLiteral -> {
-                TideArray array = null;
-                int idx = 0;
-                for (Expression expr : arrayLiteral.elements) {
-                    TideObject elem = evaluate(expr);
-                    array = new TideArray(elem.getType().getTypeName(), arrayLiteral.elements.size());
-                    array.set(idx, elem);
-                    idx++;
+                if (arrayLiteral.elements.isEmpty()) {
+                    return new TideArray("object", 0);
+                }
+                TideObject firstElem = evaluate(arrayLiteral.elements.getFirst());
+                TideArray array = new TideArray(firstElem.getType().getTypeName(), arrayLiteral.elements.size());
+                array.set(0, firstElem);
+                for (int i = 1; i < arrayLiteral.elements.size(); i++) {
+                    TideObject elem = evaluate(arrayLiteral.elements.get(i));
+                    array.set(i, elem);
                 }
                 return array;
+            }
+            case null -> {
+                return TideObject.NULL;
             }
             default -> throw new UnsupportedOperationException(expression.toString());
         }
@@ -317,8 +404,60 @@ public class Interpreter extends AbstractRuntime {
                 i.incrementAndGet();
             });
             return function.invoke(args);
+        } else if (mayBeFun instanceof TideClass tideClass) {
+            TideClass instance = tideClass.instantiate();
+            try {
+                invokeFunction(funCall, instance.getField("<init>"));
+            } catch (TypeError ignored) {
+
+            }
+            return instance;
         } else {
             throw new TypeError("Attempt to try to invoke non-function value");
+        }
+    }
+
+    private void initializeClassStatic(TideClass clazz) {
+        for (Node node : ((TideASTProgram) clazz.getBody()).program.body) {
+            switch (node) {
+                case FunDecl funDecl -> {
+                    TideFunction function = new TideFunction(
+                            funDecl.signature,
+                            new TideASTProgram(funDecl.body),
+                            funDecl.name
+                    );
+                    if (funDecl.modifiers.contains(Modifier.STATIC)) {
+                        clazz.setField(funDecl.name, function);
+                    } else {
+                        clazz.setInstanceField(funDecl.name, function);
+                    }
+                }
+                case VarDecl varDecl -> {
+                    TideObject init = evaluate(varDecl.initializer);
+                    if (init.getType().getTypeName().equals(varDecl.type) || varDecl.type.equals("object")) {
+                        if (varDecl.modifiers.contains(Modifier.STATIC)) {
+                            clazz.setField(varDecl.name, new TideObjectHolder(init, varDecl.modifiers));
+                        } else {
+                            clazz.setInstanceField(varDecl.name, new TideObjectHolder(init, varDecl.modifiers));
+                        }
+                    } else {
+                        if (init instanceof TideArray array) {
+                            if (array.length() == 0) {
+                                String varTypeTrimmed = varDecl.type.substring(0, varDecl.type.length() - 2);
+                                if (varDecl.modifiers.contains(Modifier.STATIC)) {
+                                    clazz.setField(varDecl.name, new TideObjectHolder(new TideArray(varTypeTrimmed, 0), varDecl.modifiers));
+                                } else {
+                                    clazz.setInstanceField(varDecl.name, new TideObjectHolder(new TideArray(varTypeTrimmed, 0), varDecl.modifiers));
+                                }
+                                return;
+                            }
+                        }
+                        throw new TypeError("Expected " + varDecl.type + ", got " + init.getType().getTypeName());
+                    }
+
+                }
+                default -> throw new UnsupportedOperationException("");
+            }
         }
     }
 

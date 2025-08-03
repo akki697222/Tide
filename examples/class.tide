@@ -1,0 +1,27 @@
+/*
+class HelloWorld {
+    public constructor() {
+        print("おい、笑える");
+    }
+
+    static fun helloWorld() {
+        print("Hello, World!");
+    }
+}
+
+HelloWorld.helloWorld();
+HelloWorld hw = HelloWorld();
+*/
+fun fib(int n) {
+    int a = 0;
+    int b = 1;
+    for i in 0 .. n {
+        int next = a + b;
+        a = b;
+        b = next;
+    }
+    ret a;
+}
+print(fib(10));
+
+print(10 ^ 2);

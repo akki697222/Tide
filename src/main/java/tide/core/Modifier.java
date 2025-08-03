@@ -5,8 +5,9 @@ package tide.core;
  * @since V1
  */
 public enum Modifier {
-    LOCAL,
-    GLOBAL,
-    META,
+    PUBLIC,
+    PRIVATE,
     FINAL,
+    ABSTRACT,
+    STATIC
 }

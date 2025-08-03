@@ -1,5 +1,6 @@
 package tide.core;
 
+import tide.runtime.error.CastError;
 import tide.runtime.error.TypeError;
 
 import java.util.HashMap;
@@ -11,7 +12,7 @@ import java.util.Map;
  * @since V1
  */
 public class TideLong extends TideObject {
-    public static final TideTypeObject TYPE = new TideTypeObject("long", TideObject.TYPE, new HashSet<>());
+    public static final TideTypeObject TYPE = new TideTypeObject("long", new HashSet<>());
     private final Long value;
     private static final Map<Long, TideLong> cache = new HashMap<>();
 
@@ -57,6 +58,11 @@ public class TideLong extends TideObject {
     public TideObject mod(TideObject other) {
         Long right = parseLong(other);
         return newInstance(value % right);
+    }
+
+    @Override
+    public TideObject pow(TideObject other) {
+        return newInstance((long) Math.pow(value, parseLong(other)));
     }
 
     @Override
@@ -150,7 +156,7 @@ public class TideLong extends TideObject {
         return TideBool.of(value >= right);
     }
 
-    private Long parseLong(TideObject object) {
+    public static Long parseLong(TideObject object) {
         switch (object) {
             case TideLong tideLong -> {
                 return tideLong.value;
@@ -186,5 +192,25 @@ public class TideLong extends TideObject {
 
     public Long getValue() {
         return value;
+    }
+
+    @Override
+    public TideObject copy() {
+        return newInstance(value);
+    }
+
+    @Override
+    public TideObject cast(TideTypeObject type) {
+        if (type == TideInteger.TYPE) {
+            return TideInteger.newInstance(TideInteger.parseInt(this));
+        } else if (type == TideLong.TYPE) {
+            return TideLong.newInstance(TideLong.parseLong(this));
+        } else if (type == TideFloat.TYPE) {
+            return TideFloat.newInstance(TideFloat.parseFloat(this));
+        } else if (type == TideDouble.TYPE) {
+            return TideDouble.newInstance(TideDouble.parseDouble(this));
+        } else {
+            throw new CastError("Cannot cast " + TYPE.getTypeName() + " to " + type.getTypeName());
+        }
     }
 }

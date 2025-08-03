@@ -7,7 +7,7 @@ public enum BinaryOperator {
 
     // ビット演算子
     BOR("|"),           // ビット和
-    BXOR("^"),          // ビット排他的論理和
+    BXOR("^^"),          // ビット排他的論理和
     BAND("&"),          // ビット積
 
     // 等価演算子
@@ -30,6 +30,7 @@ public enum BinaryOperator {
     MUL("*"),           // 乗算
     DIV("/"),           // 除算
     MOD("%"),           // 剰余
+    POW("^"),
 
     // 代入演算子
     ASSIGN("="),        // 単純代入
@@ -38,11 +39,12 @@ public enum BinaryOperator {
     MUL_ASSIGN("*="),   // 乗算代入
     DIV_ASSIGN("/="),   // 除算代入
     MOD_ASSIGN("%="),   // 剰余代入
+    POW_ASSIGN("^="),
     LSH_ASSIGN("<<="),  // 左シフト代入
     RSH_ASSIGN(">>="),  // 右シフト代入
     BAND_ASSIGN("&="),  // ビット積代入
     BOR_ASSIGN("|="),   // ビット和代入
-    BXOR_ASSIGN("^=");  // ビット排他的論理和代入
+    BXOR_ASSIGN("^^=");  // ビット排他的論理和代入
 
     private final String symbol;
 

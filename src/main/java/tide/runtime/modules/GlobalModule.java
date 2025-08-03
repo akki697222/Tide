@@ -4,7 +4,11 @@ import tide.core.JavaFunction;
 import tide.core.TideObject;
 import tide.core.TideString;
 import tide.runtime.Runtime;
+import tide.runtime.error.JavaRuntimeError;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.Map;
 
 /**
@@ -13,13 +17,21 @@ import java.util.Map;
  */
 public class GlobalModule extends Module {
     public static final class print extends JavaFunction {
+        public static final BufferedWriter out = new BufferedWriter(new OutputStreamWriter(System.out));
+
         public print() {
             super(Map.of("message", "object"));
         }
 
         @Override
         public TideObject invoke(Map<String, TideObject> args) {
-            System.out.println(args.get("message"));
+            try {
+                out.write(args.get("message").toString());
+                out.newLine();
+                out.flush();
+            } catch (IOException e) {
+                throw new JavaRuntimeError(e);
+            }
             return NULL;
         }
     }

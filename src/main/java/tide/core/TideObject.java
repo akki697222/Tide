@@ -3,6 +3,7 @@ package tide.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tide.runtime.Runtime;
+import tide.runtime.error.CastError;
 import tide.runtime.error.UnsupportedBinaryOperationError;
 
 import java.io.Serializable;
@@ -14,18 +15,19 @@ import java.util.*;
  */
 public class TideObject implements Serializable {
     public static final TideObject NULL = new TideObject() {
-        final TideTypeObject TYPE_NULL = new TideTypeObject("null", null, new HashSet<>());
+        final TideTypeObject TYPE_NULL = new TideTypeObject("null", new HashSet<>());
 
         @Override
         public TideTypeObject getType() {
             return TYPE_NULL;
         }
     };
-    public static final TideTypeObject TYPE = new TideTypeObject("object", null, new HashSet<>());
+    public static final TideObjectHolder NULL_HOLDER = new TideObjectHolder(NULL, Set.of(Modifier.FINAL));
+    public static final TideTypeObject TYPE = new TideTypeObject("object", new HashSet<>());
     private static final Logger log = LoggerFactory.getLogger(TideObject.class);
     public static Runtime runtime;
 
-    protected final Map<String, TideObject> fields = new HashMap<>();
+    protected final Map<String, TideObjectHolder> fields = new HashMap<>();
 
     protected TideObject() {
 
@@ -36,10 +38,18 @@ public class TideObject implements Serializable {
     }
 
     public TideObject getField(String name) {
-        return fields.getOrDefault(name, NULL);
+        return fields.getOrDefault(name, NULL_HOLDER).object();
     }
 
     public void setField(String name, TideObject object) {
+        if (fields.containsKey(name)) {
+            fields.replace(name, new TideObjectHolder(object, Set.of(Modifier.PUBLIC)));
+        } else {
+            fields.put(name, new TideObjectHolder(object, Set.of(Modifier.PUBLIC)));
+        }
+    }
+
+    public void setField(String name, TideObjectHolder object) {
         if (fields.containsKey(name)) {
             fields.replace(name, object);
         } else {
@@ -119,6 +129,10 @@ public class TideObject implements Serializable {
         throw new UnsupportedBinaryOperationError("");
     }
 
+    public TideObject pow(TideObject other) {
+        throw new UnsupportedBinaryOperationError("");
+    }
+
     public TideObject binvert() {
         throw new UnsupportedBinaryOperationError("");
     }
@@ -147,8 +161,16 @@ public class TideObject implements Serializable {
         return TYPE;
     }
 
+    public TideObject copy() {
+        throw new UnsupportedOperationException("copy not supported");
+    }
+
     @Override
     public String toString() {
         return getType().getTypeName() + "#" + HexFormat.of().toHexDigits(System.identityHashCode(this));
+    }
+
+    public TideObject cast(TideTypeObject type) {
+        throw new CastError("Cannot cast " + type.getTypeName() + " to object");
     }
 }

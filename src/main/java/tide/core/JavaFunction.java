@@ -8,7 +8,7 @@ import java.util.Map;
  * @since V1
  */
 public abstract class JavaFunction extends TideObject {
-    public static final TideTypeObject TYPE = new TideTypeObject("fun", null, new HashSet<>());
+    public static final TideTypeObject TYPE = new TideTypeObject("function", new HashSet<>());
 
     protected final Map<String, String> signature;
 
@@ -20,5 +20,10 @@ public abstract class JavaFunction extends TideObject {
 
     public Map<String, String> getSignature() {
         return signature;
+    }
+
+    @Override
+    public TideTypeObject getType() {
+        return TYPE;
     }
 }

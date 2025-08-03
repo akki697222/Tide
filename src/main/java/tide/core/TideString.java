@@ -7,7 +7,7 @@ import java.util.HashSet;
  * @since V1
  */
 public class TideString extends TideObject {
-    public static final TideTypeObject TYPE = new TideTypeObject("string", TideObject.TYPE, new HashSet<>());
+    public static final TideTypeObject TYPE = new TideTypeObject("string", new HashSet<>());
     private final String value;
 
     public TideString(String value) {

@@ -13,20 +13,23 @@ import java.util.HashSet;
 public class TideArray extends TideObject {
     private final TideTypeObject type;
     private final TideObject[] value;
+    private final int cap;
 
     public TideArray(String typeName, int initialCapacity) {
+        this.cap = initialCapacity;
         value = new TideObject[initialCapacity];
         setField("len", TideInteger.newInstance(initialCapacity));
-        type = new TideTypeObject(typeName + "[]", TideObject.TYPE, new HashSet<>());
+        type = new TideTypeObject(typeName + "[]", new HashSet<>());
     }
 
     public TideArray(TideObject[] value) {
         this.value = value;
         if (value.length > 0) {
-            type = new TideTypeObject(value[0].getType().getTypeName() + "[]", TideObject.TYPE, new HashSet<>());
+            type = new TideTypeObject(value[0].getType().getTypeName() + "[]", new HashSet<>());
         } else {
             throw new IllegalArgumentException("type required for array initialize");
         }
+        this.cap = value.length;
         setField("len", TideInteger.newInstance(value.length));
     }
 
@@ -75,4 +78,17 @@ public class TideArray extends TideObject {
     public TideTypeObject getType() {
         return type;
     }
+
+    @Override
+    public TideObject copy() {
+        TideObject[] newArray = new TideObject[cap];
+        System.arraycopy(value, 0, newArray, 0, cap);
+        return new TideArray(newArray);
+    }
+
+    public int length() {
+        return cap;
+    }
+
+
 }
